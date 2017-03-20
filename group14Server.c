@@ -6,18 +6,27 @@
 #include <arpa/inet.h>
 #include <time.h>
 
+struct food {
+  char *item;
+  double smallPrice;
+  double mediumPrice;
+  double largePrice;
+  
+} m[] = {
+  "Mocha", 2.25,2.55,3.0,
+  "Latte", 1.00,1.55,1.75,
+  "French Vanilla", 2.50,2.95,3.75,
+};
 
-char coffeName[255], quan[255],ans[255], cupSize[255];
-int size, qaunt;
-float totalVal = 0;
-
-
+int size;
+int opt;
+float totalVal = 0.0;
 
 void child(int sd);
 void menu(int sd);
-void sizeOfCup(int sd);
-void quantity(int sd);
-void total(int sd);
+void sizeOfCup(int sd,int menuNumber);
+void quantity(int sd,int menuNumber);
+void total(int sd,int quant, int menuNumber);
 void invoice(int sd);
 
 
@@ -58,37 +67,55 @@ int main(int argc, char *argv[])
 
 void child(int sd)
 {
-	while(1)
-	{	
-    // printmenu();
+
 	  menu(sd);
-	}
 }
 
-// Our Application's code will start from here
+// Our Application's code will start from here0
 
 void menu(int sd){
 
-    char msgString[] = "Please Select Your Option from below Menu : \n 1. Mocha \n 2. Latte \n 3. Espresso";
-	
-  	write(sd, msgString, sizeof(msgString));
+    //fprintf(stderr, "Function Menu called:");
+    int max = sizeof(m)/sizeof(struct food), i, number;
+    char *msgString = NULL; 
+    char inputMsg[1024], coffeName[255];
+    
+   snprintf(inputMsg,sizeof(inputMsg),"\t%-20s%-10s%-10s%s\n", "Item", "Small", "Medium", "Large");
+   int structSize = (max * (sizeof(m)+1)) + strlen(inputMsg);
+   msgString = (char *) malloc(structSize);
+   msgString = inputMsg;
+
+
+    for (i = 0; i < max; i++) {
+    
+    snprintf(msgString  + strlen(msgString),
+             structSize - strlen(msgString),
+             "%d.\t%-20s %-10.2f %-10.2f %.2f \n",i+1, m[i].item, m[i].smallPrice, m[i].mediumPrice,m[i].largePrice);
+  }
+ 
+   snprintf(msgString  + strlen(msgString),strlen(msgString)+1, "\nPlease Select Your Option from Above Menu : ");
+   	write(sd, msgString, strlen(msgString)+1);
 		if(!read(sd, coffeName, 255))
 		{
 			close(sd);
 			fprintf(stderr,"Bye, client dead, wait for a new client\n");
 			exit(0);
 		}
-    	fprintf(stderr, "Client sent back: %s\n", coffeName);
-   
-    //Add a switch case to map number with coffeeName
+    	fprintf(stderr, "Client selected coffee: %s\n", coffeName);
+      
+      sscanf(coffeName,"%d",&number);
     
-    sizeOfCup(sd);
+      sizeOfCup(sd,number);
     
 }
 
-void sizeOfCup(int sd){
+void sizeOfCup(int sd,int menuNumber){
 
- char msgString1[] = "Please Select Size of the cup : \n 1. Small \n 2. Medium \n 3. Large";
+//	fprintf(stderr, "Function Sizeof cup called:");
+
+   char msgString1[] = "Please Select Size of the cup : \n 1. Small \n 2. Medium \n 3. Large";
+   char cupSize[255];
+
 		write(sd, msgString1, sizeof(msgString1));
 		if(!read(sd, cupSize, 255))
 		{
@@ -101,16 +128,16 @@ void sizeOfCup(int sd){
    fprintf(stderr, "Client selected cup size: %d\n", size);
    
    //Add a switch case to map number with Cup size
-
-
-
-    quantity(sd);
+    quantity(sd,menuNumber);
 }
 
-void quantity(int sd){
+void quantity(int sd, int menuNumber){
 
+  int qaunt;
+  char quan[255];
   char msgString2[] = "Please Enter Quantity in form of integer i.e 1 or 2";
-		write(sd, msgString2, sizeof(msgString2));
+		
+    write(sd, msgString2, sizeof(msgString2));
 		if(!read(sd, quan, 255))
 		{
 			close(sd);
@@ -121,38 +148,68 @@ void quantity(int sd){
     sscanf(quan, "%d", &qaunt); 
    fprintf(stderr, "Client sent back: %d\n", qaunt);
    
-   total(sd);
+   total(sd,qaunt,menuNumber);
 }
 
-void total(int sd){
+void total(int sd, int qaunt, int menuNumber){
+
+//fprintf(stderr, "Function   total called:");
+
 
 switch(size)
     {
     //CASE 1 SMALL SIZE
-    case 1: totalVal = qaunt*1.59;
+    case 1: totalVal += qaunt*m[menuNumber-1].smallPrice;
             break;
      
      //CASE 2 MEDIUM SIZE
-    case 2: totalVal = qaunt*1.79;
+    case 2:  totalVal += qaunt*m[menuNumber-1].mediumPrice;
             break;
  
    //CASE 3 LARGE SIZE
-    case 3:  totalVal = qaunt*1.99 ;
-            break;
-    //CASE 4 X LARGE SIZE        
-    case 4:  totalVal = qaunt*2.19;
+    case 3:   totalVal += qaunt*m[menuNumber-1].largePrice;;
             break;
       
     default: printf("Invalid Error!\n");
               
     }
-    
-  invoice(sd);
+   
+   char msgString3[] = "Do you want to continue? 1-Yes, 2-No";
+   char opti[255];
+   int option;
+
+		write(sd, msgString3, sizeof(msgString3));
+		if(!read(sd, opti, 255))
+		{
+			close(sd);
+			fprintf(stderr,"Bye, client dead, wait for a new client\n");
+			exit(0);
+		}
+   
+   sscanf(opti, " %d", &option);
+   fprintf(stderr, "Client selected option: %d\n", option);
+   	   
+   switch(option)
+    {
+       //CASE 1 Yes option
+        case 1: menu(sd);
+                break;
+     
+       //CASE 2 No option
+       case 2:  invoice(sd);
+                break;
+             
+       default: printf("Invalid Error!\n");
+    }
 }
 
 void invoice(int sd){
-
-    sprintf(ans,"Your total is %f", totalVal);
-     write(sd, ans, sizeof(ans));
-  
+    //fprintf(stderr, "Function   invoice called:");
+    char msg[255], ans[255];
+    int ansVal;
+    
+    sprintf(msg,"Your total is %.2f", totalVal);
+    write(sd, msg, sizeof(ans));
+   	close(sd);
+    exit(0);
 }
