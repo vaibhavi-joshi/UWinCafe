@@ -10,21 +10,27 @@ struct food {
   char *item;
   double smallPrice;
   double mediumPrice;
-  double largePrice;
-  int count;
-  
+  double largePrice;  
 } m[] = {
-  "Original Blend Coffee", 1.59,1.79,1.99,0,
-  "Dark Roast Coffee", 1.59,1.79,1.99,0,
-  "French Vanila Coffee", 1.99,2.49,2.99,0,
-  "Decaf Coffee",1.59,1.79,1.99,0,
-  "Cafe Mocha",1.90,2.10,2.34,0,
-  "Iced Tea",1.49,1.79,1.99,0
+  "Original Blend Coffee", 1.59,1.79,1.99,
+  "Dark Roast Coffee", 1.59,1.79,1.99,
+  "French Vanila Coffee", 1.99,2.49,2.99,
+  "Decaf Coffee",1.59,1.79,1.99,
+  "Cafe Mocha",1.90,2.10,2.34,
+  "Iced Tea",1.49,1.79,1.99,
 };
 
-int size;
+struct cart{
+  char *item;
+  char *size;
+   int  count;
+   float total;
+};
+
+
+int size,num=0;
 float totalVal = 0.0;
-//struct food cart[];
+struct cart c[255];
 
 void child(int sd);
 void menu(int sd);
@@ -155,26 +161,36 @@ void quantity(int sd, int menuNumber){
 void total(int sd, int qaunt, int menuNumber){
 
 //fprintf(stderr, "Function   total called:");
-            m[menuNumber-1].count += qaunt;
+
           
 switch(size)
     {
     //CASE 1 SMALL SIZE
-    case 1: totalVal += qaunt*m[menuNumber-1].smallPrice; 
+    case 1: c[num].total = qaunt*m[menuNumber-1].smallPrice;
+            c[num].size  = "Small";
+            totalVal     +=  c[num].total;
             break;
      
      //CASE 2 MEDIUM SIZE
-    case 2: totalVal += qaunt*m[menuNumber-1].mediumPrice;
+    case 2: c[num].total  = qaunt*m[menuNumber-1].mediumPrice;
+            c[num].size   = "Medium";
+            totalVal     += c[num].total;
             break;
  
    //CASE 3 LARGE SIZE
-    case 3: totalVal += qaunt*m[menuNumber-1].largePrice;
+    case 3: c[num].total = qaunt*m[menuNumber-1].largePrice;
+            c[num].size  = "Large";
+            totalVal    += c[num].total;
             break;
       
     default: printf("Invalid Error!\n");
               
     }
-   
+ 
+   c[num].item = m[menuNumber-1].item;
+   c[num].count = qaunt;
+   num++;
+     
    char msgString3[] = "Do you want to continue? 1-Yes, 2-No \n";
    char opti[255];
    int option;
@@ -226,24 +242,25 @@ void invoice(int sd){
    
    /* ********************************** InVoicec Design ********************************************************* */
   
-    int max = sizeof(m)/sizeof(struct food), i;
+    int i;
     char *msgString = NULL; 
     char inputMsg[2048];
     
-   snprintf(inputMsg,sizeof(inputMsg),"UWinCafe Invoice:\n\n\t%-41s%-11s%-11s%--11s%--11s\n", "Item", "Small", "Medium", "Large", "Count");
-   int structSize = (max * (sizeof(m)+1)) + strlen(inputMsg);
+    
+   snprintf(inputMsg,sizeof(inputMsg),"UWinCafe Invoice:\n\n\t%-41s\t%-13s\t%-11s%s\n\n", "Item", "Size", "Count", "Total");
+   int structSize = ((sizeof(c)+1)) + strlen(inputMsg);
    msgString = (char *) malloc(structSize);
    msgString = inputMsg;
   
-     for (i = 0; i < max; i++) {
-          if (m[i].count > 0){
-             snprintf(msgString  + strlen(msgString),structSize - strlen(msgString),
-                   "\t%-30s %-10.2f %-10.2f %-12.2f %d\n",m[i].item, m[i].smallPrice, m[i].mediumPrice,m[i].largePrice,m[i].count);
-          }
+     for (i = 0; i < num; i++) {
+     
+             snprintf(msgString+strlen(msgString),structSize-strlen(msgString),
+                   "\t%-40s\t%-12s\t%-9d%.2f\n",c[i].item,c[i].size,c[i].count,c[i].total);
+        
   } 
 
    snprintf(msgString  + strlen(msgString),strlen(msgString)+1, "\n ****************** Total is: %.2f $ ***********************",totalVal);
-     
+     fprintf(stderr,"%s",msgString);
     char sub[255] = "Invoice";
     
     
