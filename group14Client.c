@@ -12,7 +12,7 @@
 
 int main(int argc, char *argv[])
 {
-	char message[255];
+	char message[800];
 	int server, portNumber;
 	socklen_t len;
 	struct sockaddr_in servAdd;
@@ -44,10 +44,12 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "connect() has failed, exiting\n");
 		exit(3);
 	}
+ 
+ printf("\n\20*************************  UW Cafe *******************************\20\n\n");
 
 	while(1)
 	{
-		if(read(server, message, 255)<0)
+		if(read(server, message, 800)<0)
 		{
 			fprintf(stderr, "read() error\n");
 			exit(3);
@@ -55,11 +57,11 @@ int main(int argc, char *argv[])
 
 		fprintf(stderr, "%s\n",message);
 	
- char *ch = "total";
-   if (strstr(message,ch)){
-     close(server);
+ 	char *ch = "inbox";
+   		if (strstr(message,ch)){
+    			close(server);
 			exit(0);
-   }
+  		 }		
 		
 		fgets(message, 254, stdin);
 		if(message[0] == '$')

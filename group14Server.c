@@ -11,16 +11,20 @@ struct food {
   double smallPrice;
   double mediumPrice;
   double largePrice;
+  int count;
   
 } m[] = {
-  "Mocha", 2.25,2.55,3.0,
-  "Latte", 1.00,1.55,1.75,
-  "French Vanilla", 2.50,2.95,3.75,
+  "Original Blend Coffee", 1.59,1.79,1.99,0,
+  "Dark Roast Coffee", 1.59,1.79,1.99,0,
+  "French Vanila Coffee", 1.99,2.49,2.99,0,
+  "Decaf Coffee",1.59,1.79,1.99,0,
+  "Cafe Mocha",1.90,2.10,2.34,0,
+  "Iced Tea",1.49,1.79,1.99,0
 };
 
 int size;
-int opt;
 float totalVal = 0.0;
+//struct food cart[];
 
 void child(int sd);
 void menu(int sd);
@@ -67,33 +71,29 @@ int main(int argc, char *argv[])
 
 void child(int sd)
 {
-
-	  menu(sd);
+    menu(sd);
 }
 
-// Our Application's code will start from here0
+// Our Application's code will start from here
 
 void menu(int sd){
 
     //fprintf(stderr, "Function Menu called:");
     int max = sizeof(m)/sizeof(struct food), i, number;
     char *msgString = NULL; 
-    char inputMsg[1024], coffeName[255];
+    char inputMsg[2048], coffeName[255];
     
-   snprintf(inputMsg,sizeof(inputMsg),"\t%-20s%-10s%-10s%s\n", "Item", "Small", "Medium", "Large");
+   snprintf(inputMsg,sizeof(inputMsg),"\t%-31s%-11s%-11s%s\n", "Item", "Small", "Medium", "Large");
    int structSize = (max * (sizeof(m)+1)) + strlen(inputMsg);
    msgString = (char *) malloc(structSize);
    msgString = inputMsg;
-
-
-    for (i = 0; i < max; i++) {
+  
+     for (i = 0; i < max; i++) {
     
-    snprintf(msgString  + strlen(msgString),
-             structSize - strlen(msgString),
-             "%d.\t%-20s %-10.2f %-10.2f %.2f \n",i+1, m[i].item, m[i].smallPrice, m[i].mediumPrice,m[i].largePrice);
-  }
- 
-   snprintf(msgString  + strlen(msgString),strlen(msgString)+1, "\nPlease Select Your Option from Above Menu : ");
+    snprintf(msgString  + strlen(msgString),structSize - strlen(msgString),
+             "%d.\t%-30s %-10.2f %-10.2f %.2f \n",i+1, m[i].item, m[i].smallPrice, m[i].mediumPrice,m[i].largePrice);
+  } 
+   snprintf(msgString  + strlen(msgString),strlen(msgString)+1, "\nPlease Select Your Option from Above Menu : \n");
    	write(sd, msgString, strlen(msgString)+1);
 		if(!read(sd, coffeName, 255))
 		{
@@ -113,7 +113,8 @@ void sizeOfCup(int sd,int menuNumber){
 
 //	fprintf(stderr, "Function Sizeof cup called:");
 
-   char msgString1[] = "Please Select Size of the cup : \n 1. Small \n 2. Medium \n 3. Large";
+   char msgString1[255];
+   sprintf(msgString1,"Please Select Size of the cup : 1. Small  2. Medium 3. Large \n");
    char cupSize[255];
 
 		write(sd, msgString1, sizeof(msgString1));
@@ -135,7 +136,7 @@ void quantity(int sd, int menuNumber){
 
   int qaunt;
   char quan[255];
-  char msgString2[] = "Please Enter Quantity in form of integer i.e 1 or 2";
+  char msgString2[] = "Please Enter Quantity in form of integer i.e 1 or 2 \n";
 		
     write(sd, msgString2, sizeof(msgString2));
 		if(!read(sd, quan, 255))
@@ -154,27 +155,27 @@ void quantity(int sd, int menuNumber){
 void total(int sd, int qaunt, int menuNumber){
 
 //fprintf(stderr, "Function   total called:");
-
-
+            m[menuNumber-1].count += qaunt;
+          
 switch(size)
     {
     //CASE 1 SMALL SIZE
-    case 1: totalVal += qaunt*m[menuNumber-1].smallPrice;
+    case 1: totalVal += qaunt*m[menuNumber-1].smallPrice; 
             break;
      
      //CASE 2 MEDIUM SIZE
-    case 2:  totalVal += qaunt*m[menuNumber-1].mediumPrice;
+    case 2: totalVal += qaunt*m[menuNumber-1].mediumPrice;
             break;
  
    //CASE 3 LARGE SIZE
-    case 3:   totalVal += qaunt*m[menuNumber-1].largePrice;;
+    case 3: totalVal += qaunt*m[menuNumber-1].largePrice;
             break;
       
     default: printf("Invalid Error!\n");
               
     }
    
-   char msgString3[] = "Do you want to continue? 1-Yes, 2-No";
+   char msgString3[] = "Do you want to continue? 1-Yes, 2-No \n";
    char opti[255];
    int option;
 
@@ -205,11 +206,75 @@ switch(size)
 
 void invoice(int sd){
     //fprintf(stderr, "Function   invoice called:");
-    char msg[255], ans[255];
-    int ansVal;
+   
+    char msgString5[255];
+    char addr[255];
     
-    sprintf(msg,"Your total is %.2f", totalVal);
-    write(sd, msg, sizeof(ans));
-   	close(sd);
-    exit(0);
+     
+    sprintf(msgString5,"Your total is %.2f \nPlease Enter your E-mail address to get invoice:\n", totalVal);
+    
+    write(sd, msgString5, sizeof(msgString5));
+		if(!read(sd, addr, 255))
+		{
+			close(sd);
+			fprintf(stderr,"Bye, client dead, wait for a new client\n");
+			exit(0);
+		}   
+   
+   fprintf(stderr, "Client email address: %s\n", addr);
+   
+   
+   /* ********************************** InVoicec Design ********************************************************* */
+  
+    int max = sizeof(m)/sizeof(struct food), i;
+    char *msgString = NULL; 
+    char inputMsg[2048];
+    
+   snprintf(inputMsg,sizeof(inputMsg),"UWinCafe Invoice:\n\n\t%-41s%-11s%-11s%--11s%--11s\n", "Item", "Small", "Medium", "Large", "Count");
+   int structSize = (max * (sizeof(m)+1)) + strlen(inputMsg);
+   msgString = (char *) malloc(structSize);
+   msgString = inputMsg;
+  
+     for (i = 0; i < max; i++) {
+          if (m[i].count > 0){
+             snprintf(msgString  + strlen(msgString),structSize - strlen(msgString),
+                   "\t%-30s %-10.2f %-10.2f %-12.2f %d\n",m[i].item, m[i].smallPrice, m[i].mediumPrice,m[i].largePrice,m[i].count);
+          }
+  } 
+
+   snprintf(msgString  + strlen(msgString),strlen(msgString)+1, "\n ****************** Total is: %.2f $ ***********************",totalVal);
+     
+    char sub[255] = "Invoice";
+    
+    
+    int check = sendmail(addr, sub, msgString);
+    
+    if (check != -1){
+        char msg[255] = "Check your inbox for Detailed Invoice !!";
+         sleep(3);
+         fprintf(stderr,"Email Sent!");
+         write(sd, msg, sizeof(msg));
+         close(sd);
+         exit(0);
+    }
+    
+}
+
+int sendmail(const char *to, const char *subject, const char *message)
+{
+    int retval = -1;
+    fprintf(stderr,"sendmail:::::");
+    FILE *mailpipe = popen("/usr/lib/sendmail -t", "w");
+    if (mailpipe != NULL) {
+        fprintf(mailpipe, "To: %s\n", to);
+      //  fprintf(mailpipe, "Subject: %s\n", subject);
+        fwrite(message, 1, strlen(message), mailpipe);
+        fwrite(".\n", 1, 2, mailpipe);
+        pclose(mailpipe);
+        retval = 0;
+     }
+     else {
+         perror("Failed to invoke sendmail");
+     }
+     return retval;
 }
